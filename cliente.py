@@ -5,8 +5,6 @@ import json
 import sys
 import os
 import time
-import subprocess
-
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from juego.protocolo import codificar, decodificar, crear_mensaje
@@ -16,6 +14,7 @@ from juego.sonido import GestorSonido
 from ui.menu import Menu
 from ui.sala_espera import SalaEspera
 from ui.mesa import Mesa
+from servidor import ServidorUNO
 
 NEGRO = (0, 0, 0)
 BLANCO = (255, 255, 255)
@@ -55,8 +54,11 @@ class ClienteUNO:
         self.sonido = GestorSonido()
         self.ultima_pantalla = None
         self.ultimo_ganador_visto = None
+        self.servidor = None
+        self.servidor_hilo = None
 
     def conectar(self, ip, puerto, nombre):
+        self.ultimo_error_red = None
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.settimeout(5)
@@ -73,7 +75,15 @@ class ClienteUNO:
             self.es_local = False
             return True
         except Exception as e:
+            self.ultimo_error_red = str(e)
             return False
+
+    def _detener_servidor(self):
+        if self.servidor:
+            try: self.servidor.detener()
+            except: pass
+            self.servidor = None
+            self.servidor_hilo = None
 
     def iniciar_local(self, num_bots, modo):
         self.es_local = True
@@ -237,29 +247,34 @@ class ClienteUNO:
                         self.sonido.play("click")
                         exito = self.conectar(menu.ip, int(menu.puerto), menu.nombre)
                         if not exito:
-                            menu.mensaje = "No se pudo conectar!"
+                            err = getattr(self, 'ultimo_error_red', '')
+                            menu.mensaje = f"Error: {err}" if err else "No se pudo conectar!"
                             self.sonido.play("error")
                         else:
                             self.sonido.play("carta")
                     elif accion == "CREAR":
                         self.sonido.play("click")
                         try:
-                            proc = subprocess.Popen([sys.executable, "servidor.py",
-                                                     "--puerto", menu.puerto],
-                                                    stdout=subprocess.DEVNULL,
-                                                    stderr=subprocess.DEVNULL)
-                            time.sleep(0.3)
-                            exito = self.conectar("127.0.0.1", int(menu.puerto), menu.nombre)
+                            self.servidor = ServidorUNO(host="0.0.0.0",
+                                                       puerto=int(menu.puerto),
+                                                       max_jugadores=4)
+                            self.servidor_hilo = threading.Thread(
+                                target=self.servidor.iniciar, daemon=True)
+                            self.servidor_hilo.start()
+                            time.sleep(0.2)
+                            exito = self.conectar("127.0.0.1", int(menu.puerto),
+                                                  menu.nombre)
                             if exito:
                                 self.es_host = True
                                 self.sonido.play("carta")
                             else:
-                                try: proc.kill()
-                                except: pass
-                                menu.mensaje = "No se pudo iniciar servidor!"
+                                self.servidor.detener()
+                                self.servidor = None
+                                err = getattr(self, 'ultimo_error_red', '')
+                                menu.mensaje = f"Error: {err}" if err else "No se pudo conectar!"
                                 self.sonido.play("error")
-                        except Exception:
-                            menu.mensaje = "Error al iniciar servidor!"
+                        except Exception as e:
+                            menu.mensaje = f"Error: {e}"
                             self.sonido.play("error")
                     elif accion and accion.startswith("UN_JUGADOR"):
                         self.sonido.play("click")
@@ -314,6 +329,7 @@ class ClienteUNO:
                             self.es_local = False
                             self.partida_local = None
                             self.estado_juego = None
+                            self._detener_servidor()
                             if self.socket:
                                 try: self.socket.close()
                                 except: pass
@@ -328,6 +344,7 @@ class ClienteUNO:
                             self.es_local = False
                             self.partida_local = None
                             self.estado_juego = None
+                            self._detener_servidor()
                         elif evento.key == pygame.K_r:
                             self.sonido.play("click")
                             if self.es_local and self.partida_local:
@@ -387,6 +404,7 @@ class ClienteUNO:
             pygame.display.flip()
             reloj.tick(30)
 
+        self._detener_servidor()
         pygame.quit()
         if self.socket:
             try:
