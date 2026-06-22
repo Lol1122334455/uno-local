@@ -427,8 +427,15 @@ class Mesa:
     def _dibujar_carta_activa(self, x, y, carta):
         if not carta:
             return
+        if self.estado:
+            color_activo = self.estado.get("color_activo")
+        else:
+            color_activo = None
+        color_card = carta.get("color", "SIN_COLOR")
+        if color_card == "SIN_COLOR" and color_activo:
+            color_card = color_activo
         pulso = abs(math.sin(self.frame * 0.06)) * 3
-        glow_color = COLORES_MAP.get(carta.get("color", "SIN_COLOR"), GRIS_CLARO)
+        glow_color = COLORES_MAP.get(color_card, GRIS_CLARO)
         for r in range(6, 0, -1):
             alpha = 40 - r * 6
             if alpha > 0:
@@ -436,6 +443,10 @@ class Mesa:
                 pygame.draw.rect(self.surface, gc + (alpha,),
                                  (x - r - 1, y - r - 1, ANCHO_CARTA + r * 2 + 2, ALTO_CARTA + r * 2 + 2), 1)
         self._dibujar_carta(x, y, carta)
+        if color_card != carta.get("color", "SIN_COLOR") and color_activo:
+            c = COLORES_MAP.get(color_activo, BLANCO)
+            pygame.draw.rect(self.surface, c, (x + ANCHO_CARTA - 12, y + ALTO_CARTA - 8, 10, 6))
+            pygame.draw.rect(self.surface, NEGRO, (x + ANCHO_CARTA - 12, y + ALTO_CARTA - 8, 10, 6), 1)
 
     def _dibujar_mazo(self, x, y):
         for i in range(3):
