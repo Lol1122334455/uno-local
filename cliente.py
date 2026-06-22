@@ -56,6 +56,8 @@ class ClienteUNO:
         self.ultimo_ganador_visto = None
         self.servidor = None
         self.servidor_hilo = None
+        self.version_actual = self._leer_version()
+        self.verifico_actualizacion = False
 
     def conectar(self, ip, puerto, nombre):
         self.ultimo_error_red = None
@@ -84,6 +86,27 @@ class ClienteUNO:
             except: pass
             self.servidor = None
             self.servidor_hilo = None
+
+    def _leer_version(self):
+        ruta = os.path.join(os.path.dirname(os.path.abspath(__file__)), "VERSION")
+        try:
+            with open(ruta) as f:
+                return f.read().strip()
+        except:
+            return "?"
+
+    def _verificar_actualizacion(self):
+        try:
+            import urllib.request
+            url = "https://raw.githubusercontent.com/Lol1122334455/uno-local/main/VERSION"
+            req = urllib.request.Request(url, headers={"User-Agent": "UNO-Local/1.0"})
+            with urllib.request.urlopen(req, timeout=5) as r:
+                ultima = r.read().decode().strip()
+            if ultima != self.version_actual:
+                return ultima
+        except:
+            pass
+        return None
 
     def iniciar_local(self, num_bots, modo):
         self.es_local = True
@@ -242,8 +265,31 @@ class ClienteUNO:
                     ventana = self._toggle_fullscreen(ventana)
 
                 if self.pantalla_actual == "MENU":
+                    if not self.verifico_actualizacion:
+                        self.verifico_actualizacion = True
+                        ultima = self._verificar_actualizacion()
+                        if ultima:
+                            menu.hay_actualizacion = True
+                            menu.mensaje = f"Actualizacion: v{self.version_actual} -> v{ultima}"
+                        menu.version_actual = self.version_actual
+
                     accion = menu.manejar_evento(evento)
-                    if accion == "CONECTAR":
+                    if accion == "ACTUALIZAR":
+                        menu.actualizando = True
+                        menu.mensaje = "Actualizando..."
+                        try:
+                            import subprocess
+                            subprocess.run(["git", "pull", "origin", "main"],
+                                          cwd=os.path.dirname(os.path.abspath(__file__)),
+                                          timeout=30)
+                            self.version_actual = self._leer_version()
+                            menu.version_actual = self.version_actual
+                            menu.hay_actualizacion = False
+                            menu.mensaje = f"Actualizado a v{self.version_actual}!"
+                        except Exception as e:
+                            menu.mensaje = f"Error al actualizar: {e}"
+                        menu.actualizando = False
+                    elif accion == "CONECTAR":
                         self.sonido.play("click")
                         exito = self.conectar(menu.ip, int(menu.puerto), menu.nombre)
                         if not exito:
@@ -331,6 +377,7 @@ class ClienteUNO:
                             self.es_local = False
                             self.partida_local = None
                             self.estado_juego = None
+                            self.verifico_actualizacion = False
                             self._detener_servidor()
                             if self.socket:
                                 try: self.socket.close()
@@ -346,6 +393,7 @@ class ClienteUNO:
                             self.es_local = False
                             self.partida_local = None
                             self.estado_juego = None
+                            self.verifico_actualizacion = False
                             self._detener_servidor()
                         elif evento.key == pygame.K_r:
                             self.sonido.play("click")

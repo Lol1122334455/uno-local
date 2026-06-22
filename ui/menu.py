@@ -25,6 +25,9 @@ class Menu:
         self.animacion_frame = 0
         self.num_bots = 2
         self.modo_single = "CLASICO"
+        self.version_actual = ""
+        self.hay_actualizacion = False
+        self.actualizando = False
 
     def manejar_evento(self, evento):
         if evento.type == pygame.KEYDOWN:
@@ -95,6 +98,11 @@ class Menu:
             elif 196 <= y <= 220 and 218 <= x <= 242:
                 self.num_bots = max(1, self.num_bots - 1)
                 if self.sonido: self.sonido.play("click")
+
+            if self.hay_actualizacion and not self.actualizando:
+                if 108 <= y <= 126 and 200 <= x <= 300:
+                    if self.sonido: self.sonido.play("click")
+                    return "ACTUALIZAR"
 
         return None
 
@@ -170,6 +178,17 @@ class Menu:
         if self.mensaje:
             msg = self.font_peq.render(self.mensaje, True, ROJO)
             self.surface.blit(msg, (160 - msg.get_width() // 2, 225))
+
+        ver = self.font_peq.render(f"v{self.version_actual}", True, GRIS_CLARO)
+        self.surface.blit(ver, (4, 228))
+
+        if self.actualizando:
+            txt = self.font_peq.render("ACTUALIZANDO...", True, AMARILLO)
+            self.surface.blit(txt, (160 - txt.get_width() // 2, 114))
+        elif self.hay_actualizacion:
+            pygame.draw.rect(self.surface, (32, 120, 200), (200, 108, 100, 18))
+            txt = self.font_peq.render("ACTUALIZAR", True, BLANCO)
+            self.surface.blit(txt, (250 - txt.get_width() // 2, 110))
 
         self.animacion_frame += 1
         for i in range(3):
