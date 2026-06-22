@@ -261,12 +261,14 @@ class ClienteUNO:
                             self.servidor_hilo = threading.Thread(
                                 target=self.servidor.iniciar, daemon=True)
                             self.servidor_hilo.start()
-                            time.sleep(0.2)
+                            time.sleep(0.5)
                             exito = self.conectar("127.0.0.1", int(menu.puerto),
                                                   menu.nombre)
                             if exito:
                                 self.es_host = True
                                 self.sonido.play("carta")
+                                self._enviar(crear_mensaje("INICIAR",
+                                            auto_bots=True))
                             else:
                                 self.servidor.detener()
                                 self.servidor = None

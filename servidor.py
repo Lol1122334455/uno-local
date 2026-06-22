@@ -32,7 +32,12 @@ class ServidorUNO:
 
         while self.corriendo:
             try:
-                cliente_socket, direccion = self.socket_servidor.accept()
+                self.socket_servidor.settimeout(0.5)
+                try:
+                    cliente_socket, direccion = self.socket_servidor.accept()
+                except socket.timeout:
+                    self._procesar_turnos_bot()
+                    continue
                 hilo = threading.Thread(target=self._manejar_cliente,
                                         args=(cliente_socket, direccion),
                                         daemon=True)
@@ -123,9 +128,17 @@ class ServidorUNO:
                 return
 
             if len(self.partida.jugadores) < 2:
-                self._enviar(cliente_socket, crear_mensaje("ERROR",
-                            mensaje="Se necesitan al menos 2 jugadores"))
-                return
+                rellenar = msg.get("auto_bots", False)
+                if rellenar:
+                    from juego.bot import Bot
+                    nombres_bot = ["R2-D2", "C-3PO", "BB-8", "HAL"]
+                    for i in range(3):
+                        nombre = nombres_bot[i % len(nombres_bot)]
+                        self.partida.agregar_jugador(nombre)
+                else:
+                    self._enviar(cliente_socket, crear_mensaje("ERROR",
+                                mensaje="Se necesitan al menos 2 jugadores"))
+                    return
 
             if self.partida.iniciar():
                 self._broadcast_partida_iniciada()
@@ -204,6 +217,50 @@ class ServidorUNO:
             for sock, id_jug in self.clientes.items():
                 if id_jug == id_turno:
                     self._enviar(sock, crear_mensaje("TU_TURNO"))
+
+    def _procesar_turnos_bot(self):
+        if not self.partida or self.partida.estado != EstadoPartida.JUGANDO:
+            return
+        turno = self.partida.turno_actual
+        id_cliente = turno in list(self.clientes.values())
+        if id_cliente:
+            return
+        import time
+        time.sleep(0.5)
+        from juego.bot import Bot
+        bots_existentes = {}
+        for jug in self.partida.jugadores:
+            if jug.id not in list(self.clientes.values()):
+                if jug.id not in bots_existentes:
+                    bots_existentes[jug.id] = Bot(jug.id, jug.nombre, "media")
+
+        bot = bots_existentes.get(turno)
+        if not bot:
+            return
+        jug = self.partida.jugadores[turno]
+        if bot.deberia_gritar_uno(jug.mano):
+            self.partida.gritar_uno(turno)
+        decision = bot.decidir_jugada(jug.mano, self.partida.carta_activa,
+                                      self.partida.color_activo, self.partida)
+        if decision:
+            color_elegido = None
+            if decision.tipo.es_comodin():
+                color_elegido = bot.elegir_color(jug.mano)
+            resultado, msg = self.partida.jugar_carta(turno, decision.id, color_elegido)
+        else:
+            carta, msg = self.partida.robar_carta(turno)
+            if carta and carta.es_jugable(self.partida.carta_activa, self.partida.color_activo):
+                color_elegido = None
+                if carta.tipo.es_comodin():
+                    color_elegido = bot.elegir_color(jug.mano)
+                self.partida.jugar_carta(turno, carta.id, color_elegido)
+        if self.partida.estado == EstadoPartida.TERMINADA:
+            self._broadcast(crear_mensaje("VICTORIA",
+                            id_ganador=self.partida.ganador,
+                            nombre=self.partida.jugadores[self.partida.ganador].nombre))
+        else:
+            self._broadcast_estado()
+            self._enviar_turno()
 
     def _enviar(self, cliente_socket, mensaje_dict):
         try:
