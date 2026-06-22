@@ -5,6 +5,8 @@ import json
 import sys
 import os
 import time
+import subprocess
+import urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from juego.protocolo import codificar, decodificar, crear_mensaje
@@ -84,6 +86,8 @@ class ClienteUNO:
         if self.servidor:
             try: self.servidor.detener()
             except: pass
+            if self.servidor_hilo and self.servidor_hilo.is_alive():
+                self.servidor_hilo.join(timeout=2)
             self.servidor = None
             self.servidor_hilo = None
 
@@ -96,16 +100,12 @@ class ClienteUNO:
             return "?"
 
     def _verificar_actualizacion(self):
-        try:
-            import urllib.request
-            url = "https://raw.githubusercontent.com/Lol1122334455/uno-local/refs/heads/main/VERSION"
-            req = urllib.request.Request(url, headers={"User-Agent": "UNO-Local/1.0"})
-            with urllib.request.urlopen(req, timeout=5) as r:
-                ultima = r.read().decode().strip()
-            if ultima != self.version_actual:
-                return ultima
-        except:
-            pass
+        url = "https://raw.githubusercontent.com/Lol1122334455/uno-local/refs/heads/main/VERSION"
+        req = urllib.request.Request(url, headers={"User-Agent": "UNO-Local/1.0"})
+        with urllib.request.urlopen(req, timeout=5) as r:
+            ultima = r.read().decode().strip()
+        if ultima != self.version_actual:
+            return ultima
         return None
 
     def iniciar_local(self, num_bots, modo):
@@ -267,10 +267,13 @@ class ClienteUNO:
                 if self.pantalla_actual == "MENU":
                     if not self.verifico_actualizacion:
                         self.verifico_actualizacion = True
-                        ultima = self._verificar_actualizacion()
-                        if ultima:
-                            menu.hay_actualizacion = True
-                            menu.mensaje = f"Actualizacion: v{self.version_actual} -> v{ultima}"
+                        try:
+                            ultima = self._verificar_actualizacion()
+                            if ultima:
+                                menu.hay_actualizacion = True
+                                menu.mensaje = f"Actualizacion: v{self.version_actual} -> v{ultima}"
+                        except:
+                            menu.mensaje = "(sin conexion para ver actualizaciones)"
                         menu.version_actual = self.version_actual
 
                     accion = menu.manejar_evento(evento)
@@ -278,7 +281,6 @@ class ClienteUNO:
                         menu.actualizando = True
                         menu.mensaje = "Actualizando..."
                         try:
-                            import subprocess
                             subprocess.run(["git", "pull", "origin", "main"],
                                           cwd=os.path.dirname(os.path.abspath(__file__)),
                                           timeout=30)
@@ -464,7 +466,6 @@ class ClienteUNO:
 
 
 def main():
-    import subprocess
     cliente = ClienteUNO()
     cliente.ejecutar()
 
