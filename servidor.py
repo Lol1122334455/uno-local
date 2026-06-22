@@ -92,7 +92,6 @@ class ServidorUNO:
 
             id_jug = len(self.clientes)
             if self.partida is None:
-                from juego.modos import MODOS
                 modo_cls = MODOS.get(self.modo_actual)
                 if modo_cls:
                     self.partida = modo_cls(max_jugadores=self.max_jugadores)
