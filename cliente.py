@@ -323,14 +323,18 @@ class ClienteUNO:
                             if exito:
                                 self.es_host = True
                                 self.sonido.play("carta")
-                                self._enviar(crear_mensaje("INICIAR",
-                                            auto_bots=True))
+                                self.pantalla_actual = "SALA"
+                                self.sonido.stop_musica()
+                                self.sonido.play_musica("menu")
                             else:
                                 self.servidor.detener()
                                 self.servidor = None
                                 err = getattr(self, 'ultimo_error_red', '')
-                                menu.mensaje = f"Error: {err}" if err else "No se pudo conectar!"
+                                menu.mensaje = f"Error al crear: {err}"
                                 self.sonido.play("error")
+                        except Exception as e:
+                            menu.mensaje = f"Error: {e}"
+                            self.sonido.play("error")
                         except Exception as e:
                             menu.mensaje = f"Error: {e}"
                             self.sonido.play("error")
@@ -347,7 +351,7 @@ class ClienteUNO:
                 elif self.pantalla_actual == "SALA":
                     accion = sala.manejar_evento(evento)
                     if accion == "INICIAR":
-                        self._enviar(crear_mensaje("INICIAR"))
+                        self._enviar(crear_mensaje("INICIAR", auto_bots=True))
                     elif accion and accion.startswith("MODO:"):
                         modo = accion.split(":")[1]
                         self._enviar(crear_mensaje("SELECCIONAR_MODO", modo=modo))
