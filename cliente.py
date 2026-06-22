@@ -218,6 +218,9 @@ class ClienteUNO:
         if self.partida_local.partida.turno_actual != self.ultimo_turno_bot:
             self.ultimo_turno_bot = self.partida_local.partida.turno_actual
             self.tiempo_ultimo_bot = time.time()
+            estado = self.partida_local.obtener_estado()
+            self.estado_juego = estado
+            self.mi_mano = estado.get("tu_mano", [])
             return
 
         if time.time() - self.tiempo_ultimo_bot < 0.5:
