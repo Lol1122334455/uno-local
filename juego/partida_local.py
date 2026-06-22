@@ -79,15 +79,18 @@ class PartidaLocal:
                 accion += f" (color: {color_elegido})"
             return accion
         else:
-            carta, mensaje = self.partida.robar_carta(id_bot)
+            carta, mensaje = self.partida.robar_sin_avanzar(id_bot)
             if carta:
                 if carta.es_jugable(carta_activa, color_activo):
                     color_elegido = None
                     if carta.tipo.es_comodin():
                         color_elegido = bot.elegir_color(jug.mano)
-                    self.partida.jugar_carta(id_bot, carta.id, color_elegido)
-                    return f"robó y jugó {carta}"
+                    ok, _ = self.partida.jugar_carta(id_bot, carta.id, color_elegido)
+                    if ok:
+                        return f"robó y jugó {carta}"
+                self.partida._avanzar_turno()
                 return f"robó {carta} (no jugable)"
+            self.partida._avanzar_turno()
             return "robó (mazo vacío)"
 
     def esta_terminada(self):

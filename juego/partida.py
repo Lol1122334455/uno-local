@@ -267,6 +267,22 @@ class Partida:
     def _avanzar_turno(self):
         self.turno_actual = self._siguiente_turno()
 
+    def robar_sin_avanzar(self, id_jugador):
+        if self.estado != EstadoPartida.JUGANDO:
+            return None, "La partida no está en juego"
+        if self.jugadores[id_jugador].id != self.jugadores[self.turno_actual].id:
+            return None, "No es tu turno"
+        carta = self.mazo.robar()
+        if not carta and self.descarte and len(self.descarte) > 1:
+            for c in self.descarte[:-1]:
+                self.mazo.cartas.append(c)
+            self.descarte = [self.descarte[-1]]
+            self.mazo.reiniciar()
+            carta = self.mazo.robar()
+        if carta:
+            self.jugadores[id_jugador].mano.append(carta)
+        return carta, "OK"
+
     def robar_carta(self, id_jugador):
         if self.estado != EstadoPartida.JUGANDO:
             return None, "La partida no está en juego"
