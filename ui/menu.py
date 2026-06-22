@@ -1,4 +1,6 @@
 import pygame
+import math
+import random
 
 NEGRO = (0, 0, 0)
 BLANCO = (255, 255, 255)
@@ -8,6 +10,30 @@ ROJO = (200, 40, 40)
 VERDE = (40, 180, 40)
 AMARILLO = (220, 200, 20)
 AZUL = (40, 80, 200)
+
+
+class ParticulaMenu:
+    def __init__(self):
+        self.x = random.uniform(0, 320)
+        self.y = random.uniform(0, 240)
+        self.vx = random.uniform(-0.2, 0.2)
+        self.vy = random.uniform(-0.3, -0.05)
+        self.tam = random.uniform(1, 2.5)
+        self.alpha = random.uniform(15, 50)
+        self.color = random.choice([ROJO, AZUL, VERDE, AMARILLO])
+
+    def actualizar(self):
+        self.x += self.vx
+        self.y += self.vy
+        self.alpha += random.uniform(-0.5, 0.5)
+        self.alpha = max(5, min(60, self.alpha))
+        if self.y < -5:
+            self.y = 245
+            self.x = random.uniform(0, 320)
+
+    def dibujar(self, surface):
+        c = tuple(min(255, int(v * (self.alpha / 50))) for v in self.color)
+        pygame.draw.circle(surface, c, (int(self.x), int(self.y)), int(self.tam))
 
 
 class Menu:
@@ -28,6 +54,8 @@ class Menu:
         self.version_actual = ""
         self.hay_actualizacion = False
         self.actualizando = False
+        self.particulas = [ParticulaMenu() for _ in range(15)]
+        self.frame = 0
 
     def manejar_evento(self, evento):
         if evento.type == pygame.KEYDOWN:
@@ -107,14 +135,21 @@ class Menu:
         return None
 
     def dibujar(self):
+        self.frame += 1
         vw, vh = self.surface.get_size()
         sx = vw / 320
         sy = vh / 240
 
         self.surface.fill(NEGRO)
 
+        for p in self.particulas:
+            p.actualizar()
+            p.dibujar(self.surface)
+
+        glow = abs(math.sin(self.frame * 0.025)) * 15 + 20
+        c_borde = tuple(min(255, int(v * 0.3 + glow)) for v in AZUL)
         pygame.draw.rect(self.surface, (36, 36, 48), (4, 4, 312, 232))
-        pygame.draw.rect(self.surface, GRIS_CLARO, (4, 4, 312, 232), 1)
+        pygame.draw.rect(self.surface, c_borde, (4, 4, 312, 232), 1)
 
         titulo = self.font_gde.render("UNO", True, BLANCO)
         sombra = self.font_gde.render("UNO", True, (80, 20, 20))
@@ -138,12 +173,15 @@ class Menu:
             txt = self.font_peq.render(valor, True, BLANCO)
             self.surface.blit(txt, (73, y + 1))
 
-        pygame.draw.rect(self.surface, (160, 32, 32), (58, 168, 84, 24))
+        pulse_btn = abs(math.sin(self.frame * 0.04)) * 15
+        c_con = tuple(min(255, int(v + pulse_btn * 0.5)) for v in (160, 32, 32))
+        pygame.draw.rect(self.surface, c_con, (58, 168, 84, 24))
         pygame.draw.rect(self.surface, BLANCO, (58, 168, 84, 24), 1)
         conectar_txt = self.font_peq.render("CONECTAR", True, BLANCO)
         self.surface.blit(conectar_txt, (100 - conectar_txt.get_width() // 2, 173))
 
-        pygame.draw.rect(self.surface, (32, 140, 32), (178, 168, 84, 24))
+        c_cre = tuple(min(255, int(v + pulse_btn)) for v in (32, 140, 32))
+        pygame.draw.rect(self.surface, c_cre, (178, 168, 84, 24))
         pygame.draw.rect(self.surface, BLANCO, (178, 168, 84, 24), 1)
         crear_txt = self.font_peq.render("CREAR", True, BLANCO)
         self.surface.blit(crear_txt, (220 - crear_txt.get_width() // 2, 173))

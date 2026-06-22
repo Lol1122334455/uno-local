@@ -351,7 +351,7 @@ class ClienteUNO:
                 elif self.pantalla_actual == "SALA":
                     accion = sala.manejar_evento(evento)
                     if accion == "INICIAR":
-                        self._enviar(crear_mensaje("INICIAR", auto_bots=True))
+                        self._enviar(crear_mensaje("INICIAR", auto_bots=sala.auto_bots))
                     elif accion and accion.startswith("MODO:"):
                         modo = accion.split(":")[1]
                         self._enviar(crear_mensaje("SELECCIONAR_MODO", modo=modo))

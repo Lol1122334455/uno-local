@@ -13,6 +13,31 @@ AMARILLO = (224, 200, 24)
 NARANJA = (224, 128, 16)
 VIOLETA = (168, 48, 200)
 FONDO_MESA = (12, 64, 28)
+
+
+class ParticulaMesa:
+    def __init__(self):
+        self.x = random.uniform(40, 280)
+        self.y = random.uniform(28, 183)
+        self.vx = random.uniform(-0.15, 0.15)
+        self.vy = random.uniform(-0.1, 0.1)
+        self.tam = random.uniform(0.5, 1.5)
+        self.alpha = random.uniform(8, 25)
+        self.color = random.choice([(100, 200, 100), (80, 180, 80), (60, 160, 60)])
+
+    def actualizar(self):
+        self.x += self.vx
+        self.y += self.vy
+        self.alpha += random.uniform(-0.3, 0.3)
+        self.alpha = max(3, min(30, self.alpha))
+        if self.x < 38 or self.x > 282:
+            self.vx *= -1
+        if self.y < 26 or self.y > 185:
+            self.vy *= -1
+
+    def dibujar(self, surface):
+        c = tuple(min(255, int(v * (self.alpha / 25))) for v in self.color)
+        pygame.draw.circle(surface, c, (int(self.x), int(self.y)), int(max(0.5, self.tam)))
 BORDE_CARTA = (20, 16, 28)
 MESA_OSCURO = (8, 48, 20)
 MESA_BORDE = (6, 38, 14)
@@ -128,6 +153,7 @@ class Mesa:
         self.turno_pulso = 0
         self.en_pausa = False
         self.carta_activa_pulso = 0
+        self.particulas_mesa = [ParticulaMesa() for _ in range(12)]
 
     def _num_jugadores(self):
         if not self.estado:
@@ -565,6 +591,10 @@ class Mesa:
             return
 
         self._dibujar_mesa()
+
+        for p in self.particulas_mesa:
+            p.actualizar()
+            p.dibujar(self.surface)
 
         self._dibujar_jugadores()
 
