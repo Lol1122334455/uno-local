@@ -177,6 +177,10 @@ class ClienteUNO:
         elif tipo == "ESTADO_JUEGO" or "tu_mano" in msg:
             self.estado_juego = msg
             self.mi_mano = msg.get("tu_mano", [])
+            if self.pantalla_actual != "MESA":
+                self.sonido.stop_musica()
+                self.sonido.play_musica("juego")
+                self.sonido.play("shuffle")
             self.pantalla_actual = "MESA"
             if msg.get("estado") == "TERMINADA":
                 self.pantalla_actual = "VICTORIA"
@@ -256,6 +260,7 @@ class ClienteUNO:
         menu = Menu(canvas, font_peq, font_gde, scale=SCALE, sonido=self.sonido)
         sala = SalaEspera(canvas, font_peq, font_gde, scale=SCALE)
         mesa = Mesa(canvas, font_peq, font_gde, scale=SCALE, sonido=self.sonido)
+        self.sonido.play_musica("menu")
 
         while self.corriendo:
             for evento in pygame.event.get():
@@ -328,6 +333,8 @@ class ClienteUNO:
                             self.sonido.play("error")
                     elif accion and accion.startswith("UN_JUGADOR"):
                         self.sonido.play("click")
+                        self.sonido.stop_musica()
+                        self.sonido.play_musica("juego")
                         partes = accion.split(":")
                         num_bots = int(partes[1])
                         modo = partes[2]
@@ -375,6 +382,8 @@ class ClienteUNO:
                             self.sonido.play("click")
                         elif partes[0] == "IR_MENU":
                             self.sonido.play("click")
+                            self.sonido.stop_musica()
+                            self.sonido.play_musica("menu")
                             self.pantalla_actual = "MENU"
                             self.es_local = False
                             self.partida_local = None
@@ -392,6 +401,8 @@ class ClienteUNO:
                     if evento.type == pygame.KEYDOWN:
                         if evento.key == pygame.K_ESCAPE:
                             self.pantalla_actual = "MENU"
+                            self.sonido.stop_musica()
+                            self.sonido.play_musica("menu")
                             self.es_local = False
                             self.partida_local = None
                             self.estado_juego = None
