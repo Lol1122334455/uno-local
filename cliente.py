@@ -98,7 +98,7 @@ class ClienteUNO:
     def _verificar_actualizacion(self):
         try:
             import urllib.request
-            url = "https://raw.githubusercontent.com/Lol1122334455/uno-local/main/VERSION"
+            url = "https://raw.githubusercontent.com/Lol1122334455/uno-local/refs/heads/main/VERSION"
             req = urllib.request.Request(url, headers={"User-Agent": "UNO-Local/1.0"})
             with urllib.request.urlopen(req, timeout=5) as r:
                 ultima = r.read().decode().strip()
