@@ -72,6 +72,12 @@ class ServidorUNO:
         except:
             return
 
+        try:
+            self._procesar_mensaje_inner(cliente_socket, msg)
+        except Exception as e:
+            print(f"[SERVER ERROR] {e}")
+
+    def _procesar_mensaje_inner(self, cliente_socket, msg):
         tipo = msg.get("tipo")
 
         if tipo == "UNIRSE":
@@ -119,6 +125,10 @@ class ServidorUNO:
                 for nombre in jugadores_actuales:
                     self.partida.agregar_jugador(nombre)
                 self._broadcast(crear_mensaje("MODO_SELECCIONADO", modo=modo))
+                self._broadcast(crear_mensaje("JUGADOR_CONECTADO", id=-1,
+                                nombre="",
+                                jugadores=[j.to_dict(ocultar_mano=True)
+                                          for j in self.partida.jugadores]))
 
         elif tipo == "INICIAR":
             id_jug = self.clientes.get(cliente_socket)
@@ -247,13 +257,22 @@ class ServidorUNO:
             if decision.tipo.es_comodin():
                 color_elegido = bot.elegir_color(jug.mano)
             resultado, msg = self.partida.jugar_carta(turno, decision.id, color_elegido)
-        else:
-            carta, msg = self.partida.robar_carta(turno)
-            if carta and carta.es_jugable(self.partida.carta_activa, self.partida.color_activo):
-                color_elegido = None
-                if carta.tipo.es_comodin():
-                    color_elegido = bot.elegir_color(jug.mano)
-                self.partida.jugar_carta(turno, carta.id, color_elegido)
+            if not resultado:
+                decision = None
+        if not decision:
+            carta, msg = self.partida.robar_sin_avanzar(turno)
+            if carta:
+                if carta.es_jugable(self.partida.carta_activa, self.partida.color_activo):
+                    color_elegido = None
+                    if carta.tipo.es_comodin():
+                        color_elegido = bot.elegir_color(jug.mano)
+                    ok, _ = self.partida.jugar_carta(turno, carta.id, color_elegido)
+                    if not ok:
+                        self.partida._avanzar_turno()
+                else:
+                    self.partida._avanzar_turno()
+            else:
+                self.partida._avanzar_turno()
         if self.partida.estado == EstadoPartida.TERMINADA:
             self._broadcast(crear_mensaje("VICTORIA",
                             id_ganador=self.partida.ganador,
