@@ -383,6 +383,13 @@ class Mesa:
         pygame.draw.ellipse(self.surface, MESA_BORDE, (40, 28, 240, 155), 2)
         pygame.draw.ellipse(self.surface, (10, 56, 24), (58, 40, 204, 130), 1)
 
+    def _dibujar_sombra(self, x, y, cw, ch):
+        for i in range(3, 0, -1):
+            alpha = 20 - i * 5
+            s = pygame.Surface((cw, ch), pygame.SRCALPHA)
+            s.fill((0, 0, 0, alpha))
+            self.surface.blit(s, (x + i, y + i))
+
     def _dibujar_carta(self, x, y, carta, seleccionada=False, hover=False, escala=1.0):
         cw = int(ANCHO_CARTA * escala)
         ch = int(ALTO_CARTA * escala)
@@ -390,16 +397,19 @@ class Mesa:
             y -= 12
         bx = x
         by = y
+        r = 3
 
-        pygame.draw.rect(self.surface, BORDE_CARTA, (bx - 1, by - 1, cw + 2, ch + 2))
+        self._dibujar_sombra(bx, by, cw, ch)
+
+        pygame.draw.rect(self.surface, BORDE_CARTA, (bx - 1, by - 1, cw + 2, ch + 2), border_radius=r)
         col_fondo = (248, 244, 240) if escala >= 0.9 else (220, 216, 212)
-        pygame.draw.rect(self.surface, col_fondo, (bx, by, cw, ch))
+        pygame.draw.rect(self.surface, col_fondo, (bx, by, cw, ch), border_radius=r)
 
         if hover or seleccionada:
             brillo = NARANJA if hover else (255, 240, 80)
-            pygame.draw.rect(self.surface, brillo, (bx - 2, by - 2, cw + 4, ch + 4), 2)
+            pygame.draw.rect(self.surface, brillo, (bx - 2, by - 2, cw + 4, ch + 4), 2, border_radius=r + 1)
         else:
-            pygame.draw.rect(self.surface, BORDE_CARTA, (bx, by, cw, ch), 1)
+            pygame.draw.rect(self.surface, BORDE_CARTA, (bx, by, cw, ch), 1, border_radius=r)
 
         color_str = carta.get("color", "SIN_COLOR")
         color_rgb = COLORES_MAP.get(color_str, GRIS)
@@ -408,8 +418,8 @@ class Mesa:
         cy = by + ch // 2
 
         if color_str != "SIN_COLOR":
-            pygame.draw.rect(self.surface, color_rgb, (bx + 2, by + 2, cw - 4, ch - 4))
-            pygame.draw.rect(self.surface, (255, 255, 255, 80), (bx + 2, by + 2, cw - 4, 4))
+            pygame.draw.rect(self.surface, color_rgb, (bx + 2, by + 2, cw - 4, ch - 4), border_radius=r)
+            pygame.draw.rect(self.surface, (255, 255, 255, 80), (bx + 2, by + 2, cw - 4, 4), border_radius=r)
             if tipo == "NUMERO" and carta.get("numero") is not None:
                 num = str(carta["numero"])
                 txt = self.font_peq.render(num, True, BLANCO)
@@ -422,8 +432,8 @@ class Mesa:
                 self.surface.blit(txt, (cx - txt.get_width() // 2, cy - txt.get_height() // 2))
         else:
             centro_color = color_rgb if color_rgb != GRIS else (180, 180, 200)
-            pygame.draw.rect(self.surface, centro_color, (bx + 3, by + 3, cw - 6, ch - 6))
-            pygame.draw.rect(self.surface, (255, 255, 255, 60), (bx + 3, by + 3, cw - 6, 4))
+            pygame.draw.rect(self.surface, centro_color, (bx + 3, by + 3, cw - 6, ch - 6), border_radius=r)
+            pygame.draw.rect(self.surface, (255, 255, 255, 60), (bx + 3, by + 3, cw - 6, 4), border_radius=r)
             sim = self._simbolo_carta(carta)
             txt = self.font_peq.render(sim, True, BLANCO)
             self.surface.blit(txt, (cx - txt.get_width() // 2, cy - txt.get_height() // 2))
@@ -431,10 +441,12 @@ class Mesa:
     def _dibujar_carta_dorso(self, x, y, escala=1.0):
         cw = int(ANCHO_CARTA * escala)
         ch = int(ALTO_CARTA * escala)
-        pygame.draw.rect(self.surface, BORDE_CARTA, (x - 1, y - 1, cw + 2, ch + 2))
-        pygame.draw.rect(self.surface, (40, 36, 72), (x, y, cw, ch))
-        pygame.draw.rect(self.surface, (56, 52, 96), (x + 2, y + 2, cw - 4, ch - 4))
-        pygame.draw.rect(self.surface, (72, 68, 120), (x + 4, y + 4, cw - 8, ch - 8))
+        r = 3
+        self._dibujar_sombra(x, y, cw, ch)
+        pygame.draw.rect(self.surface, BORDE_CARTA, (x - 1, y - 1, cw + 2, ch + 2), border_radius=r)
+        pygame.draw.rect(self.surface, (40, 36, 72), (x, y, cw, ch), border_radius=r)
+        pygame.draw.rect(self.surface, (56, 52, 96), (x + 2, y + 2, cw - 4, ch - 4), border_radius=r)
+        pygame.draw.rect(self.surface, (72, 68, 120), (x + 4, y + 4, cw - 8, ch - 8), border_radius=r)
         txt = self.font_peq.render("U", True, (100, 100, 180))
         self.surface.blit(txt, (x + cw // 2 - txt.get_width() // 2,
                                 y + ch // 2 - txt.get_height() // 2))
@@ -541,14 +553,14 @@ class Mesa:
         s = pygame.Surface((320, 240), pygame.SRCALPHA)
         s.fill((0, 0, 0, 200))
         self.surface.blit(s, (0, 0))
-        pygame.draw.rect(self.surface, BORDE_CARTA, (86, 68, 148, 50))
+        pygame.draw.rect(self.surface, BORDE_CARTA, (86, 68, 148, 50), border_radius=4)
         txt = self.font_peq.render("ELEGIR COLOR", True, BLANCO)
         self.surface.blit(txt, (160 - txt.get_width() // 2, 72))
         colores = [("ROJO", ROJO, 94), ("AZUL", AZUL, 124), ("VERDE", VERDE, 154), ("AMARILLO", AMARILLO, 184)]
         for nombre, color, cx in colores:
-            pygame.draw.rect(self.surface, BORDE_CARTA, (cx - 1, 88 - 1, 30, 30))
-            pygame.draw.rect(self.surface, color, (cx, 88, 28, 28))
-            pygame.draw.rect(self.surface, (255, 255, 255, 40), (cx, 88, 28, 4))
+            pygame.draw.rect(self.surface, BORDE_CARTA, (cx - 1, 88 - 1, 30, 30), border_radius=3)
+            pygame.draw.rect(self.surface, color, (cx, 88, 28, 28), border_radius=3)
+            pygame.draw.rect(self.surface, (255, 255, 255, 40), (cx, 88, 28, 4), border_radius=3)
 
     def _dibujar_animaciones(self):
         for anim in self.animaciones[:]:
@@ -613,21 +625,22 @@ class Mesa:
 
         self._dibujar_mazo(MAZO_X, MAZO_Y)
 
-        pygame.draw.rect(self.surface, BORDE_CARTA, (236, 146, 56, 24))
-        pygame.draw.rect(self.surface, (48, 160, 48), (238, 148, 52, 20))
+        r = 4
+        pygame.draw.rect(self.surface, BORDE_CARTA, (236, 146, 56, 24), border_radius=r)
+        pygame.draw.rect(self.surface, (48, 160, 48), (238, 148, 52, 20), border_radius=r)
         robar_txt = self.font_peq.render("ROBAR", True, BLANCO)
         self.surface.blit(robar_txt, (250 - robar_txt.get_width() // 2, 152))
 
         pulso_uno = abs(math.sin(self.frame * 0.12))
         cu = (int(200 + 55 * pulso_uno), int(180 + 40 * pulso_uno), int(20 + 10 * pulso_uno))
-        pygame.draw.rect(self.surface, BORDE_CARTA, (8, 146, 54, 20))
-        pygame.draw.rect(self.surface, cu, (10, 148, 50, 16))
+        pygame.draw.rect(self.surface, BORDE_CARTA, (8, 146, 54, 20), border_radius=r)
+        pygame.draw.rect(self.surface, cu, (10, 148, 50, 16), border_radius=r)
         uno_txt = self.font_peq.render("UNO!", True, NEGRO)
         self.surface.blit(uno_txt, (35 - uno_txt.get_width() // 2, 150))
 
         if self.carta_seleccionada is not None and self.carta_seleccionada < len(self.mi_mano):
-            pygame.draw.rect(self.surface, BORDE_CARTA, (118, 161, 64, 22))
-            pygame.draw.rect(self.surface, NARANJA, (120, 163, 60, 18))
+            pygame.draw.rect(self.surface, BORDE_CARTA, (118, 161, 64, 22), border_radius=r)
+            pygame.draw.rect(self.surface, NARANJA, (120, 163, 60, 18), border_radius=r)
             jugar_txt = self.font_peq.render("JUGAR", True, BLANCO)
             self.surface.blit(jugar_txt, (150 - jugar_txt.get_width() // 2, 165))
 
@@ -653,11 +666,11 @@ class Mesa:
             s = pygame.Surface((320, 240), pygame.SRCALPHA)
             s.fill((0, 0, 0, 210))
             self.surface.blit(s, (0, 0))
-            pygame.draw.rect(self.surface, BORDE_CARTA, (88, 58, 144, 100))
+            pygame.draw.rect(self.surface, BORDE_CARTA, (88, 58, 144, 100), border_radius=6)
             txt = self.font_gde.render("PAUSA", True, BLANCO)
             self.surface.blit(txt, (160 - txt.get_width() // 2, 62))
             for i, (texto, y) in enumerate([("REANUDAR", 80), ("MENU", 106), ("SALIR", 132)]):
-                pygame.draw.rect(self.surface, (48, 48, 56), (100, y, 120, 22))
-                pygame.draw.rect(self.surface, BLANCO, (100, y, 120, 22), 1)
+                pygame.draw.rect(self.surface, (48, 48, 56), (100, y, 120, 22), border_radius=4)
+                pygame.draw.rect(self.surface, BLANCO, (100, y, 120, 22), 1, border_radius=4)
                 t = self.font_peq.render(texto, True, BLANCO)
                 self.surface.blit(t, (160 - t.get_width() // 2, y + 4))

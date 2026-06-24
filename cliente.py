@@ -253,12 +253,17 @@ class ClienteUNO:
     def ejecutar(self):
         pygame.init()
         ventana = pygame.display.set_mode((VIRTUAL_W * SCALE, VIRTUAL_H * SCALE))
-        pygame.display.set_caption("UNO - Pixel Retro  [F11 = pantalla completa]")
+        pygame.display.set_caption("UNO  [F11 = pantalla completa]")
         reloj = pygame.time.Clock()
 
         canvas = pygame.Surface((VIRTUAL_W, VIRTUAL_H))
-        font_peq = pygame.font.SysFont("monospace", 8, bold=False)
-        font_gde = pygame.font.SysFont("monospace", 28, bold=True)
+        ruta_fuente = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fuente.ttf")
+        if os.path.exists(ruta_fuente):
+            font_peq = pygame.font.Font(ruta_fuente, 10)
+            font_gde = pygame.font.Font(ruta_fuente, 28)
+        else:
+            font_peq = pygame.font.SysFont("monospace", 8, bold=False)
+            font_gde = pygame.font.SysFont("monospace", 28, bold=True)
 
         menu = Menu(canvas, font_peq, font_gde, scale=SCALE, sonido=self.sonido)
         sala = SalaEspera(canvas, font_peq, font_gde, scale=SCALE)
@@ -451,8 +456,8 @@ class ClienteUNO:
                 mesa.dibujar()
             elif self.pantalla_actual == "VICTORIA":
                 canvas.fill(NEGRO)
-                pygame.draw.rect(canvas, (36, 36, 48), (20, 40, 280, 160))
-                pygame.draw.rect(canvas, GRIS_CLARO, (20, 40, 280, 160), 1)
+                pygame.draw.rect(canvas, (36, 36, 48), (20, 40, 280, 160), border_radius=6)
+                pygame.draw.rect(canvas, GRIS_CLARO, (20, 40, 280, 160), 1, border_radius=6)
                 if self.estado_juego:
                     ganador_id = self.estado_juego.get("ganador")
                     jugadores = self.estado_juego.get("jugadores", [])

@@ -145,10 +145,11 @@ class Menu:
             p.actualizar()
             p.dibujar(self.surface)
 
+        rp = 6
         glow = abs(math.sin(self.frame * 0.025)) * 15 + 20
         c_borde = tuple(min(255, int(v * 0.3 + glow)) for v in AZUL)
-        pygame.draw.rect(self.surface, (36, 36, 48), (4, 4, 312, 232))
-        pygame.draw.rect(self.surface, c_borde, (4, 4, 312, 232), 1)
+        pygame.draw.rect(self.surface, (36, 36, 48), (4, 4, 312, 232), border_radius=rp)
+        pygame.draw.rect(self.surface, c_borde, (4, 4, 312, 232), 1, border_radius=rp)
 
         titulo = self.font_gde.render("UNO", True, BLANCO)
         sombra = self.font_gde.render("UNO", True, (80, 20, 20))
@@ -166,49 +167,51 @@ class Menu:
             y = y_base + i * 22
             lbl = self.font_peq.render(label, True, GRIS_CLARO)
             self.surface.blit(lbl, (20, y + 1))
-            pygame.draw.rect(self.surface, (40, 40, 52), (70, y, 110, 16))
+            pygame.draw.rect(self.surface, (40, 40, 52), (70, y, 110, 16), border_radius=3)
             color_borde = (255, 200, 40) if self.input_activo == entradas[i] else GRIS
-            pygame.draw.rect(self.surface, color_borde, (70, y, 110, 16), 1)
+            pygame.draw.rect(self.surface, color_borde, (70, y, 110, 16), 1, border_radius=3)
             txt = self.font_peq.render(valor, True, BLANCO)
             self.surface.blit(txt, (73, y + 1))
 
+        r = 4
         pulse_btn = abs(math.sin(self.frame * 0.04)) * 15
         c_con = tuple(min(255, int(v + pulse_btn * 0.5)) for v in (160, 32, 32))
-        pygame.draw.rect(self.surface, c_con, (58, 168, 84, 24))
-        pygame.draw.rect(self.surface, BLANCO, (58, 168, 84, 24), 1)
+        pygame.draw.rect(self.surface, c_con, (58, 168, 84, 24), border_radius=r)
+        pygame.draw.rect(self.surface, BLANCO, (58, 168, 84, 24), 1, border_radius=r)
         conectar_txt = self.font_peq.render("CONECTAR", True, BLANCO)
         self.surface.blit(conectar_txt, (100 - conectar_txt.get_width() // 2, 173))
 
         c_cre = tuple(min(255, int(v + pulse_btn)) for v in (32, 140, 32))
-        pygame.draw.rect(self.surface, c_cre, (178, 168, 84, 24))
-        pygame.draw.rect(self.surface, BLANCO, (178, 168, 84, 24), 1)
+        pygame.draw.rect(self.surface, c_cre, (178, 168, 84, 24), border_radius=r)
+        pygame.draw.rect(self.surface, BLANCO, (178, 168, 84, 24), 1, border_radius=r)
         crear_txt = self.font_peq.render("CREAR", True, BLANCO)
         self.surface.blit(crear_txt, (220 - crear_txt.get_width() // 2, 173))
 
         pygame.draw.rect(self.surface, GRIS, (10, 128, 300, 1))
 
-        pygame.draw.rect(self.surface, (180, 160, 16), (58, 196, 204, 24))
-        pygame.draw.rect(self.surface, BLANCO, (58, 196, 204, 24), 1)
+        pygame.draw.rect(self.surface, (180, 160, 16), (58, 196, 204, 24), border_radius=r)
+        pygame.draw.rect(self.surface, BLANCO, (58, 196, 204, 24), 1, border_radius=r)
         unoj_txt = self.font_peq.render(f"1 JUGADOR ({self.num_bots} bots)", True, NEGRO)
         self.surface.blit(unoj_txt, (160 - unoj_txt.get_width() // 2, 201))
 
+        r = 3
         modos = ["CLASICO", "RELAMPAGO", "CAOS", "DUELO", "ZOMBIE"]
         colores_modo = [(200, 40, 40), (200, 200, 40), (160, 40, 200), (40, 160, 40), (80, 60, 40)]
         for i, m in enumerate(modos):
             x = 20 + i * 56
             y = 136
             mc = colores_modo[i] if m == self.modo_single else GRIS
-            pygame.draw.rect(self.surface, mc, (x, y, 54, 16))
-            pygame.draw.rect(self.surface, BLANCO, (x, y, 54, 16), 1)
+            pygame.draw.rect(self.surface, mc, (x, y, 54, 16), border_radius=r)
+            pygame.draw.rect(self.surface, BLANCO, (x, y, 54, 16), 1, border_radius=r)
             txt = self.font_peq.render(m[:4], True, BLANCO)
             self.surface.blit(txt, (x + 27 - txt.get_width() // 2, y + 1))
 
-        pygame.draw.rect(self.surface, GRIS, (220, 198, 20, 20))
-        pygame.draw.rect(self.surface, BLANCO, (220, 198, 20, 20), 1)
+        pygame.draw.rect(self.surface, GRIS, (220, 198, 20, 20), border_radius=r)
+        pygame.draw.rect(self.surface, BLANCO, (220, 198, 20, 20), 1, border_radius=r)
         menos_txt = self.font_peq.render("-", True, BLANCO)
         self.surface.blit(menos_txt, (230 - menos_txt.get_width() // 2, 200))
-        pygame.draw.rect(self.surface, GRIS, (244, 198, 20, 20))
-        pygame.draw.rect(self.surface, BLANCO, (244, 198, 20, 20), 1)
+        pygame.draw.rect(self.surface, GRIS, (244, 198, 20, 20), border_radius=r)
+        pygame.draw.rect(self.surface, BLANCO, (244, 198, 20, 20), 1, border_radius=r)
         mas_txt = self.font_peq.render("+", True, BLANCO)
         self.surface.blit(mas_txt, (254 - mas_txt.get_width() // 2, 200))
 
@@ -223,7 +226,7 @@ class Menu:
             txt = self.font_peq.render("ACTUALIZANDO...", True, AMARILLO)
             self.surface.blit(txt, (160 - txt.get_width() // 2, 114))
         elif self.hay_actualizacion:
-            pygame.draw.rect(self.surface, (32, 120, 200), (200, 108, 100, 18))
+            pygame.draw.rect(self.surface, (32, 120, 200), (200, 108, 100, 18), border_radius=4)
             txt = self.font_peq.render("ACTUALIZAR", True, BLANCO)
             self.surface.blit(txt, (250 - txt.get_width() // 2, 110))
 
@@ -232,7 +235,7 @@ class Menu:
             x = 60 + i * 100
             y = 225 + (self.animacion_frame % 24 > 12) * 2
             card_color = [(200, 40, 40), (40, 80, 200), (40, 180, 40)][i]
-            pygame.draw.rect(self.surface, BLANCO, (x, y, 18, 14))
-            pygame.draw.rect(self.surface, NEGRO, (x, y, 18, 14), 1)
-            pygame.draw.rect(self.surface, card_color, (x + 2, y + 2, 14, 10))
-            pygame.draw.rect(self.surface, NEGRO, (x, y, 20, 16), 1)
+            pygame.draw.rect(self.surface, BLANCO, (x, y, 18, 14), border_radius=2)
+            pygame.draw.rect(self.surface, NEGRO, (x, y, 18, 14), 1, border_radius=2)
+            pygame.draw.rect(self.surface, card_color, (x + 2, y + 2, 14, 10), border_radius=1)
+            pygame.draw.rect(self.surface, NEGRO, (x, y, 20, 16), 1, border_radius=2)

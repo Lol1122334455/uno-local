@@ -115,16 +115,17 @@ class SalaEspera:
                 msg = self.font_peq.render(self.mensaje, True, ROJO)
                 self.surface.blit(msg, (160 - msg.get_width() // 2, 110))
 
+            r = 4
             pulse_i = abs(math.sin(self.frame * 0.05)) * 30
             c_btn = tuple(min(255, int(v + pulse_i)) for v in VERDE)
-            pygame.draw.rect(self.surface, c_btn, (100, 80, 120, 22))
-            pygame.draw.rect(self.surface, BLANCO, (100, 80, 120, 22), 1)
+            pygame.draw.rect(self.surface, c_btn, (100, 80, 120, 22), border_radius=r)
+            pygame.draw.rect(self.surface, BLANCO, (100, 80, 120, 22), 1, border_radius=r)
             iniciar_txt = self.font_peq.render("INICIAR", True, NEGRO)
             self.surface.blit(iniciar_txt, (130, 83))
 
             color_bots = VERDE if self.auto_bots else ROJO
-            pygame.draw.rect(self.surface, color_bots, (100, 170, 30, 18))
-            pygame.draw.rect(self.surface, BLANCO, (100, 170, 30, 18), 1)
+            pygame.draw.rect(self.surface, color_bots, (100, 170, 30, 18), border_radius=3)
+            pygame.draw.rect(self.surface, BLANCO, (100, 170, 30, 18), 1, border_radius=3)
             if self.auto_bots:
                 pygame.draw.line(self.surface, BLANCO, (105, 178), (113, 185), 2)
                 pygame.draw.line(self.surface, BLANCO, (113, 185), (125, 172), 2)
@@ -142,8 +143,8 @@ class SalaEspera:
             if m == self.modo:
                 pulse_m = abs(math.sin(self.frame * 0.08)) * 20
                 color = tuple(min(255, int(v + pulse_m)) for v in color)
-            pygame.draw.rect(self.surface, color, (x, y, 50, 20))
-            pygame.draw.rect(self.surface, BLANCO, (x, y, 50, 20), 1)
+            pygame.draw.rect(self.surface, color, (x, y, 50, 20), border_radius=3)
+            pygame.draw.rect(self.surface, BLANCO, (x, y, 50, 20), 1, border_radius=3)
             txt = self.font_peq.render(m[:4], True, BLANCO)
             self.surface.blit(txt, (x + 2, y + 2))
 
