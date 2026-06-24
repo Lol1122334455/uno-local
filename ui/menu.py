@@ -116,16 +116,15 @@ class Menu:
                     self.modo_single = modos[idx]
                     if self.sonido: self.sonido.play("click")
 
-            if 194 <= y <= 222 and 56 <= x <= 264:
-                if self.sonido: self.sonido.play("click")
-                return f"UN_JUGADOR:{self.num_bots}:{self.modo_single}"
-
             if 196 <= y <= 220 and 244 <= x <= 266:
                 self.num_bots = min(3, self.num_bots + 1)
                 if self.sonido: self.sonido.play("click")
             elif 196 <= y <= 220 and 218 <= x <= 242:
                 self.num_bots = max(1, self.num_bots - 1)
                 if self.sonido: self.sonido.play("click")
+            elif 194 <= y <= 222 and 56 <= x <= 264:
+                if self.sonido: self.sonido.play("click")
+                return f"UN_JUGADOR:{self.num_bots}:{self.modo_single}"
 
             if self.hay_actualizacion and not self.actualizando:
                 if 108 <= y <= 126 and 200 <= x <= 300:

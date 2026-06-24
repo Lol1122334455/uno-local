@@ -281,7 +281,10 @@ class Mesa:
 
     def manejar_evento(self, evento):
         if evento.type == pygame.KEYDOWN and evento.key == pygame.K_ESCAPE:
-            if not self.mostrando_color:
+            if self.mostrando_color:
+                self.mostrando_color = False
+                self.carta_seleccionada = None
+            else:
                 self.en_pausa = not self.en_pausa
             return None
 

@@ -44,10 +44,10 @@ class PartidaCaos(Partida):
             self.ultima_accion = ("VISION", id_actual)
 
         elif evento == EventoCaos.BOMBA:
-            self.jugadores[id_actual].mano.append(self.mazo.robar())
-            self.jugadores[id_actual].mano.append(self.mazo.robar())
-            self.jugadores[id_actual].mano.append(self.mazo.robar())
-            self.jugadores[id_actual].mano.append(self.mazo.robar())
+            for _ in range(4):
+                c = self.mazo.robar()
+                if c:
+                    self.jugadores[id_actual].mano.append(c)
 
         elif evento == EventoCaos.OSCURIDAD:
             for jug in self.jugadores:

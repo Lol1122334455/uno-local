@@ -34,6 +34,15 @@ class EventoCaos(Enum):
 EVENTOS_CAOS = list(EventoCaos)
 
 
+TURNOS_EXCLUIDOS = {
+    TipoCarta.SALTO, TipoCarta.MAS2, TipoCarta.MAS4,
+    TipoCarta.REVERSA, TipoCarta.CAMBIO, TipoCarta.BLOQUEO,
+    TipoCarta.VISION, TipoCarta.ESPADA, TipoCarta.VENENO,
+    TipoCarta.ANTIDOTO, TipoCarta.TRAMPA, TipoCarta.RELAMPAGO,
+    TipoCarta.ESCUDO, TipoCarta.CURA,
+}
+
+
 class Partida:
     def __init__(self, modo=ModoJuego.CLASICO, max_jugadores=4):
         self.modo = modo
@@ -51,7 +60,6 @@ class Partida:
         self.eventos_pendientes = []
         self.turnos_sin_jugar = {}
         self.penalizacion_actual = None
-
         self.mazo_eventos = []
 
     def agregar_jugador(self, nombre):
@@ -118,6 +126,14 @@ class Partida:
     def _siguiente_turno(self):
         return (self.turno_actual + self.sentido) % len(self.jugadores)
 
+    def _saltar_si_trampa(self):
+        saltos = self.turnos_sin_jugar.get(self.turno_actual, 0)
+        if saltos > 0:
+            self.turnos_sin_jugar[self.turno_actual] = saltos - 1
+            self._avanzar_turno()
+            return True
+        return False
+
     def jugar_carta(self, id_jugador, id_carta, color_elegido=None):
         self.penalizacion_actual = None
         if self.estado != EstadoPartida.JUGANDO:
@@ -126,25 +142,30 @@ class Partida:
         if self.jugadores[id_jugador].id != self.jugadores[self.turno_actual].id:
             return False, "No es tu turno"
 
+        if self._saltar_si_trampa():
+            return False, "Turno saltado por trampa"
+
         jug = self.jugadores[id_jugador]
         carta = next((c for c in jug.mano if c.id == id_carta), None)
         if not carta:
             return False, "No tienes esa carta"
 
-        if not carta.es_jugable(self.carta_activa, self.color_activo):
-            if carta.tipo == TipoCarta.MAS4:
-                tiene_color = any(
-                    c.color == self.color_activo for c in jug.mano if c.id != carta.id
-                )
-                if tiene_color and self.modo != ModoJuego.CAOS:
-                    return False, "Tienes el color activo, no puedes jugar +4"
-            elif not carta.tipo.es_comodin():
-                return False, "La carta no es jugable"
+        if carta.tipo == TipoCarta.MAS4:
+            tiene_color = any(
+                c.color == self.color_activo for c in jug.mano if c.id != carta.id
+            )
+            if tiene_color and self.modo != ModoJuego.CAOS:
+                return False, "Tienes el color activo, no puedes jugar +4"
+        elif not carta.es_jugable(self.carta_activa, self.color_activo):
+            return False, "La carta no es jugable"
 
         jug.mano.remove(carta)
 
         if carta.tipo.es_comodin() and color_elegido:
-            self.color_activo = Color(color_elegido.upper())
+            try:
+                self.color_activo = Color(color_elegido.upper())
+            except ValueError:
+                self.color_activo = Color.ROJO
         elif carta.tipo.es_de_color():
             self.color_activo = carta.color
 
@@ -152,19 +173,21 @@ class Partida:
         self.carta_activa = carta
         self.ultima_accion = ("JUGAR", id_jugador, carta)
 
-        if carta.tipo != TipoCarta.NUMERO and carta.tipo != TipoCarta.CURA:
+        if carta.tipo != TipoCarta.NUMERO:
             self._aplicar_efecto(carta, id_jugador)
 
         if len(jug.mano) == 1 and not jug.ha_gritado_uno:
-            pass
+            for _ in range(2):
+                c = self.mazo.robar()
+                if c:
+                    jug.mano.append(c)
 
         if len(jug.mano) == 0:
             self.estado = EstadoPartida.TERMINADA
             self.ganador = id_jugador
             return True, "VICTORIA"
 
-        if carta.tipo not in (TipoCarta.SALTO, TipoCarta.MAS2, TipoCarta.MAS4,
-                               TipoCarta.REVERSA, TipoCarta.CAMBIO):
+        if carta.tipo not in TURNOS_EXCLUIDOS:
             self._avanzar_turno()
 
         return True, "OK"
@@ -207,8 +230,7 @@ class Partida:
             self._avanzar_turno()
 
         elif carta.tipo == TipoCarta.BLOQUEO:
-            jug = self.jugadores[id_jugador]
-            jug.tiene_escudo = True
+            self.jugadores[id_jugador].tiene_escudo = True
             self._avanzar_turno()
 
         elif carta.tipo == TipoCarta.VISION:
@@ -250,8 +272,6 @@ class Partida:
                 c = self.mazo.robar()
                 if c:
                     min_jug.mano.append(c)
-            if carta.tipo.es_comodin():
-                self._avanzar_turno()
 
         elif carta.tipo == TipoCarta.RELAMPAGO:
             for jug in self.jugadores:
@@ -266,6 +286,8 @@ class Partida:
 
     def _avanzar_turno(self):
         self.turno_actual = self._siguiente_turno()
+        while self._saltar_si_trampa():
+            pass
 
     def robar_sin_avanzar(self, id_jugador):
         if self.estado != EstadoPartida.JUGANDO:
@@ -288,6 +310,9 @@ class Partida:
             return None, "La partida no está en juego"
         if self.jugadores[id_jugador].id != self.jugadores[self.turno_actual].id:
             return None, "No es tu turno"
+
+        if self._saltar_si_trampa():
+            return None, "Turno saltado por trampa"
 
         carta = self.mazo.robar()
         if not carta and self.descarte and len(self.descarte) > 1:
